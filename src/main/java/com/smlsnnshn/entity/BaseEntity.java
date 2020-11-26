@@ -1,4 +1,4 @@
-package com.smlsnnshn.model;
+package com.smlsnnshn.entity;
 
 import java.time.LocalDateTime;
 

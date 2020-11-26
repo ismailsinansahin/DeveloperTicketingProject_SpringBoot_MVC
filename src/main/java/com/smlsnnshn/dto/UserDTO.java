@@ -13,8 +13,7 @@ public class UserDTO {
     private RoleDTO role;
     private Gender gender;
 
-    public UserDTO() {
-    }
+    public UserDTO() {}
 
     public UserDTO(String firstName, String lastName, String userName, String passWord,
                    boolean enabled, String phone, RoleDTO role, Gender gender) {
