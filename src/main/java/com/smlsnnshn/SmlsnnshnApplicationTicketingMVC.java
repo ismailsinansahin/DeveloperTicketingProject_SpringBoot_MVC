@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SmlsnnshnApplication {
+public class SmlsnnshnApplicationTicketingMVC {
 
     public static void main(String[] args) {
-        SpringApplication.run(SmlsnnshnApplication.class, args);
+        SpringApplication.run(SmlsnnshnApplicationTicketingMVC.class, args);
     }
 
 }

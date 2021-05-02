@@ -1,8 +1,11 @@
 package com.smlsnnshn.controller;
 
 import com.smlsnnshn.dto.ProjectDTO;
+import com.smlsnnshn.dto.TaskDTO;
+import com.smlsnnshn.dto.UserDTO;
 import com.smlsnnshn.enums.Status;
 import com.smlsnnshn.service.ProjectService;
+import com.smlsnnshn.service.TaskService;
 import com.smlsnnshn.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -12,6 +15,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Controller
 @RequestMapping("/project")
 public class ProjectController {
@@ -20,24 +26,26 @@ public class ProjectController {
     ProjectService projectService;
     @Autowired
     UserService userService;
+    @Autowired
+    TaskService taskService;
 
     @GetMapping("/create")
-    public String createProject(Model model){
-        model.addAttribute("project",new ProjectDTO());
-        model.addAttribute("projects",projectService.findAll());
-        model.addAttribute("managers",userService.findManagers());
+    public String createProject(Model model) {
+        model.addAttribute("project", new ProjectDTO());
+        model.addAttribute("projects", projectService.findAll());
+        model.addAttribute("managers", userService.findManagers());
         return "/project/create";
     }
 
     @PostMapping("/create")
-    public String insertProject(ProjectDTO project){
+    public String insertProject(ProjectDTO project) {
         projectService.save(project);
         project.setProjectStatus(Status.OPEN);
         return "redirect:/project/create";
     }
 
     @GetMapping("/delete/{projectcode}")
-    public String deleteProject(@PathVariable("projectcode") String projectcode){
+    public String deleteProject(@PathVariable("projectcode") String projectcode) {
         projectService.deleteById(projectcode);
         return "redirect:/project/create";
     }
@@ -50,10 +58,40 @@ public class ProjectController {
 
     @GetMapping("/update/{projectcode}")
     public String editProject(@PathVariable("projectcode") String projectcode, Model model) {
-        model.addAttribute("project",projectService.findById(projectcode));
-        model.addAttribute("projects",projectService.findAll());
-        model.addAttribute("managers",userService.findManagers());
+        model.addAttribute("project", projectService.findById(projectcode));
+        model.addAttribute("projects", projectService.findAll());
+        model.addAttribute("managers", userService.findManagers());
         return "/project/update";
+    }
+
+    @PostMapping("/update/{projectcode}")
+    public String updateProject(@PathVariable("projectcode") String projectcode, ProjectDTO project, Model model) {
+        projectService.update(project);
+        return "redirect:/project/create";
+    }
+
+    @GetMapping("/manager/complete")
+    public String getProjectByManager(Model model) {
+        UserDTO manager = userService.findById("john@cybertek.com");
+        List<ProjectDTO> projects = getCountedListOfProjectDTO(manager);
+        model.addAttribute("projects", projects);
+        return "/manager/project-status";
+    }
+
+    List<ProjectDTO> getCountedListOfProjectDTO(UserDTO manager) {
+        List<ProjectDTO> list = projectService
+            .findAll()
+            .stream()
+            .filter(x -> x.getAssignedManager().equals(manager))
+            .map(x -> {
+                List<TaskDTO> taskList = taskService.findTaskByManager(manager);
+                int completeCount = (int) taskList.stream().filter(t -> t.getProject().equals(x) && t.getTaskStatus() == Status.COMPLETE).count();
+                int inCompleteCount = (int) taskList.stream().filter(t -> t.getProject().equals(x) && t.getTaskStatus() != Status.COMPLETE).count();
+                x.setCompleteTaskCounts(completeCount);
+                x.setUnfinishedTaskCounts(inCompleteCount);
+                return x;
+            }).collect(Collectors.toList());
+        return list;
     }
 
 }
